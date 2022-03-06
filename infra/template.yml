@@ -77,7 +77,7 @@ Resources:
       Role: !GetAtt LambdaProducerExecutionRole.Arn
       Handler: index.handler
       Code:
-        S3Bucket: !Sub BucketLambdaSourceCode
+        S3Bucket: !Ref BucketLambdaSourceCode
         S3Key: !Ref BucketKeyLambdaProducerSourceCode
       Tags:
         - Key: Owner
@@ -118,7 +118,7 @@ Resources:
       Role: !GetAtt LambdaConsumerExecutionRole.Arn
       Handler: index.handler
       Code:
-        S3Bucket: !Sub BucketLambdaSourceCode
+        S3Bucket: !Ref BucketLambdaSourceCode
         S3Key: !Ref BucketKeyLambdaConsumerSourceCode
       Tags:
         - Key: Owner
