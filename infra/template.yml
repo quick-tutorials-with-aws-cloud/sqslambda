@@ -1,0 +1,133 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Creates a SQS Queue, a Lambda producer and a Lambda consumer
+
+Parameters:
+
+  QueueName:
+    Type: String
+    Default: Queue
+
+  LambdaProducerName:
+    Type: String
+    Default: LambdaProducerName
+
+  LambdaConsumerName:
+    Type: String
+    Default: LambdaConsumerName
+
+  BucketLambdaSourceCode:
+    Type: String
+    Default: tg-quicklabs-lambdasrc
+
+  BucketKeyLambdaProducerSourceCode:
+    Type: String
+    Default: LambdaProducer.zip
+
+  BucketKeyLambdaConsumerSourceCode:
+    Type: String
+    Default: LambdaConsumer.zip
+
+  Owner:
+    Type: String
+    Default: tg
+
+Resources:
+
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Ref QueueName
+      DelaySeconds: 0
+      MessageRetentionPeriod: 300
+      Tags:
+        - Key: Owner
+          Value: !Ref Owner
+
+  LambdaProducerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${LambdaProducerName}ExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: !Sub ${LambdaProducerName}ExecutionRolePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - logs:*
+              - sqs:SendMessage
+            Resource: "*"
+
+  LambdaProducer:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaProducerName
+      Runtime: nodejs14.x
+      Role: !GetAtt LambdaProducerExecutionRole.Arn
+      Handler: index.handler
+      Code:
+        S3Bucket: !Sub ${AWS::AccountId}BucketLambdaSourceCode
+        S3Key: !Ref BucketKeyLambdaProducerSourceCode
+      Tags:
+        - Key: Owner
+          Value: !Ref Owner
+
+  LambdaConsumerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${LambdaConsumerName}ExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: !Sub ${LambdaConsumerName}ExecutionRolePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - logs:*
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+            Resource: "*"
+
+  LambdaConsumer:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaConsumerName
+      Runtime: nodejs14.x
+      Role: !GetAtt LambdaConsumerExecutionRole.Arn
+      Handler: index.handler
+      Code:
+        S3Bucket: !Sub ${AWS::AccountId}BucketLambdaSourceCode
+        S3Key: !Ref BucketKeyLambdaConsumerSourceCode
+      Tags:
+        - Key: Owner
+          Value: !Ref Owner
+
+  SQSEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: true
+      EventSourceArn: !GetAtt Queue.Arn
+      # FilterCriteria: Json
+      FunctionName: !Ref LambdaConsumerName
