@@ -65,7 +65,9 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-              - logs:*
+              - logs:CreateLogStream
+              - logs:CreateLogGroup
+              - logs:PutLogEvents
               - sqs:SendMessage
             Resource: "*"
 
@@ -104,7 +106,9 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-              - logs:*
+              - logs:CreateLogStream
+              - logs:CreateLogGroup
+              - logs:PutLogEvents
               - sqs:ReceiveMessage
               - sqs:DeleteMessage
               - sqs:GetQueueAttributes
