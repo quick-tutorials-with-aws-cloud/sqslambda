@@ -8,7 +8,7 @@ This project creates:
 
 ## How to invoke
 
-Go to Lambda's console and configure a new event test.
+Go to Lambda's console, find the producer function and configure a new event test.
 
 Payload example:
 ```
